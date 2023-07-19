@@ -4,12 +4,12 @@ using System.Threading;
 
 namespace Lib.Repository.Repository;
 
-public interface IMonsterRepository
+public interface IMonsterRepository : IRepository
 {
     public ValueTask<EntityEntry<Monster>> AddAsync(Monster monster);
     public Task AddAsync(IEnumerable<Monster> monsters);
     public ValueTask<Monster?> FindAsync(int? id);
     public Task<Monster[]> GetAllAsync();
     public Task<EntityEntry<Monster>?> RemoveAsync(Monster monster);
-    public void Update(int id, Monster oldMonster, Monster newMonster);
+    public void Update(Monster oldMonster, Monster newMonster);
 }

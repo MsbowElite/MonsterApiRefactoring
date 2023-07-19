@@ -7,42 +7,43 @@ namespace Lib.Repository.Repository;
 public class MonsterRepository : IMonsterRepository
 {
     private readonly BattleOfMonstersContext _context;
+    public IUnitOfWork UnitOfWork => _context;
 
     public MonsterRepository(BattleOfMonstersContext context)
     {
-        this._context = context;
+        _context = context;
     }
     
     public ValueTask<EntityEntry<Monster>> AddAsync(Monster monster)
     {
-        return this._context.Set<Monster>().AddAsync(monster);
+        return _context.Set<Monster>().AddAsync(monster);
     }
 
     public Task AddAsync(IEnumerable<Monster> monsters)
     {
-        return this._context.Set<Monster>().AddRangeAsync(monsters);
+        return _context.Set<Monster>().AddRangeAsync(monsters);
     }
 
     public ValueTask<Monster?> FindAsync(int? id)
     {
-        return this._context.Set<Monster>().FindAsync(id);
+        return _context.Set<Monster>().FindAsync(id);
     }
 
     public async Task<Monster[]> GetAllAsync()
     {
-        return await this._context.Set<Monster>().ToArrayAsync();
+        return await _context.Set<Monster>().ToArrayAsync();
     }
 
     public async Task<EntityEntry<Monster>?> RemoveAsync(Monster monster)
     {
-        return monster == null ? null : this._context.Set<Monster>().Remove(monster);
+        return monster == null ? null : _context.Set<Monster>().Remove(monster);
     }
 
-    public void Update(int id, Monster oldMonster, Monster newMonster)
+    public void Update(Monster oldMonster, Monster newMonster)
     {
         if (oldMonster != null)
         {
-            this._context.Entry<Monster>(oldMonster).CurrentValues.SetValues(newMonster);
+            _context.Entry<Monster>(oldMonster).CurrentValues.SetValues(newMonster);
         }
     }
 }

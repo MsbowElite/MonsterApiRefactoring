@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.ChangeTracking;
 
 namespace Lib.Repository.Repository;
 
-public interface IBattleRepository
+public interface IBattleRepository : IRepository
 {
     public ValueTask<EntityEntry<Battle>> AddAsync(Battle battle);
     public Task<Battle?> FindAsync(int id);

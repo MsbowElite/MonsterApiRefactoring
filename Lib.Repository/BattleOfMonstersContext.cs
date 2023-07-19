@@ -1,16 +1,22 @@
 ﻿using Lib.Repository.Entities;
 using Lib.Repository.Mappings;
+using Lib.Repository.Repository;
 using Microsoft.EntityFrameworkCore;
 
 namespace Lib.Repository;
 
-public sealed class BattleOfMonstersContext : DbContext
+public sealed class BattleOfMonstersContext : DbContext, IUnitOfWork
 {
     public DbSet<Battle> Battle { get; set; } = null!;
     public DbSet<Monster> Monster { get; set; } = null!;
 
 
     public BattleOfMonstersContext(DbContextOptions<BattleOfMonstersContext> options) : base(options) { }
+
+    public async Task<bool> Commit()
+    {
+        return await base.SaveChangesAsync(true) > 0;
+    }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

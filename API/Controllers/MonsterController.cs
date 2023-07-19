@@ -16,50 +16,6 @@ public class MonsterController : BaseApiController
         _repository = battleOfMonstersRepository;
     }
 
-    [HttpGet]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<ActionResult> GetAll()
-    {
-        return Ok(await _repository.Monsters.GetAllAsync());
-    }
-
-    [HttpGet("{id:int}")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<ActionResult> Find(int id)
-    {
-        Monster monster = await GetMonster(id);
-        if (monster is null)
-            return NotFound($"The monster with ID = {id} not found.");
-        return Ok(monster);
-    }
-
-    private async Task<Monster> GetMonster(int id)
-    {
-        return await _repository.Monsters.FindAsync(id);
-    }
-
-    [HttpPost]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<ActionResult> Add([FromBody] Monster monster)
-    {
-        await _repository.Monsters.AddAsync(monster);
-        await _repository.Save();
-        return Ok(monster);
-    }
-
-    [HttpPut("{id:int}")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<ActionResult> Update(int id, [FromBody] Monster monster)
-    {
-        var monsterOnDatabase = await GetMonster(id);
-        if (monsterOnDatabase is null)
-            return NotFound($"The monster with ID = {id} not found.");
-
-        _repository.Monsters.Update(id, monsterOnDatabase, monster);
-        await _repository.Save();
-        return Ok();
-    }
-
     [HttpDelete("{id:int}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<ActionResult> Remove(int id)

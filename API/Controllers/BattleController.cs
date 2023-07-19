@@ -28,9 +28,6 @@ public class BattleController : BaseApiController
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<ActionResult> Add([FromBody] Battle battle)
     {
-        if (!BattleValidator.IsValid(battle))
-            return BadRequest("Missing ID");
-
         await _repository.Battles.AddAsync(battle);
         return Ok();
     }

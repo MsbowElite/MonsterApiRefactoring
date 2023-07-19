@@ -7,10 +7,11 @@ namespace Lib.Repository.Repository;
 public class BattleRepository : IBattleRepository
 {
     private readonly BattleOfMonstersContext _context;
+    public IUnitOfWork UnitOfWork => _context;
 
     public BattleRepository(BattleOfMonstersContext context)
     {
-        this._context = context;
+        _context = context;
     }
 
     public ValueTask<EntityEntry<Battle>> AddAsync(Battle battle)

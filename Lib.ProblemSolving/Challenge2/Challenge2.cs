@@ -15,5 +15,7 @@ public static class Challenge2
             list.Where(w => w == i).Count();
 
         }
+
+        return list.Count;
     }
 }

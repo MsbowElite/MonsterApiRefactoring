@@ -1,13 +1,16 @@
-﻿using Lib.Repository.Entities;
+﻿using FluentValidation;
+using Lib.Repository.Entities;
 
 namespace API.Validators
 {
-    public class BattleValidator
+    public class BattleValidator : AbstractValidator<Battle>
     {
-        public static bool IsValid(Battle battle)
+        public BattleValidator()
         {
-            if (battle.MonsterA is null || battle.MonsterB is null) return false;
-            return true;
+            RuleFor(battle => battle.MonsterA)
+                .NotNull().NotEmpty();
+            RuleFor(battle => battle.MonsterB)
+                .NotNull().NotEmpty();
         }
     }
 }
