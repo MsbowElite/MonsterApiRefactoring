@@ -33,9 +33,8 @@ public class BattleRepository : IBattleRepository
             .ToArrayAsync();
     }
 
-    public async Task<EntityEntry<Battle>?> RemoveAsync(int id)
+    public async Task<EntityEntry<Battle>?> RemoveAsync(Battle battle)
     {
-        Battle? entity = await this._context.Set<Battle>().FindAsync(id);
-        return entity == null ? null : this._context.Set<Battle>().Remove(entity);
+        return battle == null ? null : _context.Set<Battle>().Remove(battle);
     }
 }

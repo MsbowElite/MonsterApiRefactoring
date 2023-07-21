@@ -1,8 +1,11 @@
 ﻿using API.Endpoints.Internal;
+using API.Models;
+using CsvHelper;
 using FluentValidation;
 using FluentValidation.Results;
 using Lib.Repository.Entities;
 using Lib.Repository.Repository;
+using System.Globalization;
 
 namespace API.Endpoints
 {
@@ -37,17 +40,22 @@ namespace API.Endpoints
                 .Accepts<Monster>(ContentType)
                 .Produces<Monster>(200).Produces(404);
 
-            monsters.MapPut($"{Slash}{{isbn}}", UpdateMonsterAsync)
+            monsters.MapPut($"{Slash}{{id}}", UpdateMonsterAsync)
                 .WithName("UpdateMonster")
                 .Accepts<Monster>(ContentType)
                 .Produces<Monster>(200).Produces<IEnumerable<ValidationFailure>>(400);
 
-            monsters.MapDelete($"{Slash}{{isbn}}", DeleteMonsterAsync)
+            monsters.MapDelete($"{Slash}{{id}}", DeleteMonsterAsync)
                 .WithName("DeleteMonster")
                 .Produces<Monster>(204).Produces<IEnumerable<ValidationFailure>>(400);
+
+            monsters.MapPost($"{Slash}UploadCsvToImport", UploadCsvToImportAsync)
+                .WithName("UploadCsvToImport")
+                .Accepts<Monster>(ContentType)
+                .Produces(204).Produces(400);
         }
 
-        internal static async Task<IResult> CreateMonsterAsync(Monster monster, IMonsterRepository repository, IValidator<Monster> validator)
+        public static async Task<IResult> CreateMonsterAsync(Monster monster, IMonsterRepository repository, IValidator<Monster> validator)
         {
             var validationResult = await validator.ValidateAsync(monster);
             if (!validationResult.IsValid)
@@ -67,30 +75,90 @@ namespace API.Endpoints
 
             return Results.Created($"/{BaseRoute}/{monster.Id}", monster);
         }
-        internal static async Task<IResult> GetAllMonstersAsync(IMonsterRepository repository)
+        public static async Task<IResult> GetAllMonstersAsync(IMonsterRepository repository)
         {
             return Results.Ok(await repository.GetAllAsync());
         }
-        internal static async Task<IResult> GetMonsterByIdAsync(int id, IMonsterRepository repository)
+        public static async Task<IResult> GetMonsterByIdAsync(int id, IMonsterRepository repository)
         {
             var monster = await repository.FindAsync(id);
             return monster is not null ? Results.Ok(monster) : Results.NotFound($"The monster with ID = {id} not found.");
         }
-        internal static async Task<IResult> UpdateMonsterAsync(int id, Monster monster, IMonsterRepository repository, IValidator<Monster> validator)
+        public static async Task<IResult> UpdateMonsterAsync(int id, Monster monster, IMonsterRepository repository, IValidator<Monster> validator)
         {
             monster.Id = id;
-            var validationResult = await validator.ValidateAsync(monster);
+            ValidationResult validationResult = await validator.ValidateAsync(monster);
             if (!validationResult.IsValid)
                 return Results.BadRequest(validationResult.Errors);
 
             repository.Update(await repository.FindAsync(id), monster);
             return !await repository.UnitOfWork.Commit() ? Results.NotFound() : Results.Ok(monster);
         }
-        internal static async Task<IResult> DeleteBookAsync(
+        public static async Task<IResult> DeleteMonsterAsync(
             int id, IMonsterRepository repository)
         {
-            var deleted = await repository.RemoveAsync(await repository.FindAsync(id));
-            return await repository.UnitOfWork.Commit() ? Results.NoContent() : Results.NotFound();
+            repository.Remove(await repository.FindAsync(id));
+            return await repository.UnitOfWork.Commit() ? Results.NoContent() : Results.NotFound($"The monster with ID = {id} not found.");
+        }
+        public static async Task<IResult> UploadCsvToImportAsync(IFormFile file, IMonsterRepository repository)
+        {
+            try
+            {
+                string ext = Path.GetExtension(file.FileName);
+                string filename = Guid.NewGuid().ToString() + ext;
+                string directory = Path.Combine(Directory.GetCurrentDirectory(), "Temp");
+                string filepath = Path.Combine(directory, filename);
+
+                if (!Directory.Exists(directory))
+                {
+                    Directory.CreateDirectory(directory);
+                }
+
+                await using (FileStream fs = System.IO.File.Create(filepath))
+                {
+                    await file.CopyToAsync(fs);
+                }
+
+                if (ext != ".csv")
+                {
+                    return Results.BadRequest("The extension is not supporting.");
+                }
+
+                using (var reader = new StreamReader(filepath))
+                {
+                    using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
+                    {
+                        try
+                        {
+                            var records = csv.GetRecords<MonsterToImport>().ToList();
+                            var monsters = records.Select(x => new Monster()
+                            {
+                                Name = x.name,
+                                Attack = x.attack,
+                                Defense = x.defense,
+                                Speed = x.speed,
+                                Hp = x.hp,
+                                ImageUrl = x.imageUrl
+                            });
+
+                            await repository.AddAsync(monsters);
+                            await repository.UnitOfWork.Commit();
+
+                            System.IO.File.Delete(filepath);
+                            return Results.NoContent();
+                        }
+                        catch (Exception)
+                        {
+                            System.IO.File.Delete(filepath);
+                            return Results.BadRequest("Wrong data mapping.");
+                        }
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                return Results.BadRequest("Wrong data mapping.");
+            }
         }
     }
 }

@@ -19,7 +19,6 @@ public static class ApplicationServiceExtensions
 
     public static void AddApplicationServices(this IServiceCollection services)
     {
-        services.AddScoped<IBattleOfMonstersRepository, BattleOfMonstersRepository>();
     }
 
     public static void ConfigureServices(this IServiceCollection services, IConfiguration configuration)

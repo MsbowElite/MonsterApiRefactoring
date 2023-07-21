@@ -1,22 +1,28 @@
 using System.Diagnostics;
-using API.Controllers;
+using API.Endpoints;
 using API.Test.Fixtures;
+using API.Validators;
 using FluentAssertions;
+using FluentValidation;
+using FluentValidation.Results;
 using Lib.Repository.Entities;
 using Lib.Repository.Repository;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 
 namespace API.Test;
 
-public class MonsterControllerTests
+public class MonsterEndpointsTests
 {
-    private readonly Mock<IBattleOfMonstersRepository> _repository;
+    private readonly Mock<IMonsterRepository> _repository;
+    private readonly Mock<IValidator<Monster>> _validator;
 
-    public MonsterControllerTests()
+    public MonsterEndpointsTests()
     {
-        this._repository = new Mock<IBattleOfMonstersRepository>();
+        _repository = new Mock<IMonsterRepository>();
+        _validator = new Mock<IValidator<Monster>>();
     }
     
     [Fact]
@@ -25,12 +31,10 @@ public class MonsterControllerTests
         Monster[] monsters = MonsterFixture.GetMonstersMock().ToArray();
 
         this._repository
-            .Setup(x => x.Monsters.GetAllAsync())
+            .Setup(x => x.GetAllAsync())
             .ReturnsAsync(monsters);
-
-        MonsterController sut = new MonsterController(_repository.Object);
-
-        ActionResult result = await sut.GetAll();
+        
+        IResult result = await MonsterEndpoints.GetAllMonstersAsync(_repository.Object);
         OkObjectResult objectResults = (OkObjectResult) result;
         objectResults?.Value.Should().BeOfType<Monster[]>();
     }
@@ -43,14 +47,11 @@ public class MonsterControllerTests
 
         Monster monster = monsters[0];
         this._repository
-            .Setup(x => x.Monsters.FindAsync(id))
+            .Setup(x => x.FindAsync(id))
             .ReturnsAsync(monster);
 
-        MonsterController sut = new MonsterController(_repository.Object);
-
-        ActionResult result = await sut.Find(id);
-        OkObjectResult objectResults = (OkObjectResult)result;
-        objectResults?.Value.Should().BeOfType<Monster>();
+        IResult result = await MonsterEndpoints.GetMonsterByIdAsync(id, _repository.Object);
+        result.Should().BeOfType<Ok<Monster>>();
     }
 
     [Fact]
@@ -59,12 +60,10 @@ public class MonsterControllerTests
         const int id = 123;
 
         this._repository
-            .Setup(x => x.Monsters.FindAsync(id))
+            .Setup(x => x.FindAsync(id))
             .ReturnsAsync(() => null);
 
-        MonsterController sut = new MonsterController(_repository.Object);
-
-        ActionResult result = await sut.Find(id);
+        IResult result = await MonsterEndpoints.GetMonsterByIdAsync(id, _repository.Object);
         NotFoundObjectResult objectResults = (NotFoundObjectResult)result;
         result.Should().BeOfType<NotFoundObjectResult>();
         Assert.Equal($"The monster with ID = {id} not found.", objectResults.Value);
@@ -83,12 +82,13 @@ public class MonsterControllerTests
             ImageUrl = ""
         };
 
-        this._repository
-            .Setup(x => x.Monsters.AddAsync(m));
+        _repository
+            .Setup(x => x.AddAsync(m));
+        _validator
+            .Setup(x => x.ValidateAsync(m, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ValidationResult());
 
-        MonsterController sut = new MonsterController(_repository.Object);
-
-        ActionResult result = await sut.Add(m);
+        IResult result = await MonsterEndpoints.CreateMonsterAsync(m, _repository.Object, _validator.Object);
         OkObjectResult objectResults = (OkObjectResult)result;
         objectResults?.Value.Should().BeOfType<Monster>();
     }
@@ -104,16 +104,13 @@ public class MonsterControllerTests
             Name = "Monster Update"
         };
 
-        this._repository
-            .Setup(x => x.Monsters.FindAsync(id))
-            .ReturnsAsync(monsters[0]);
+        _repository
+           .Setup(x => x.Update(monsters[0], m));
+        _validator
+            .Setup(x => x.ValidateAsync(m, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ValidationResult());
 
-        this._repository
-           .Setup(x => x.Monsters.Update(id, monsters[0], m));
-
-        MonsterController sut = new MonsterController(_repository.Object);
-
-        ActionResult result = await sut.Update(id, m);
+        IResult result = await MonsterEndpoints.UpdateMonsterAsync(id, m, _repository.Object, _validator.Object);
         OkResult objectResults = (OkResult)result;
         objectResults.StatusCode.Should().Be(200);
     }
@@ -128,16 +125,13 @@ public class MonsterControllerTests
             Name = "Monster Update"
         };
 
-        this._repository
-            .Setup(x => x.Monsters.FindAsync(id))
-            .ReturnsAsync(() => null);
+        _repository
+           .Setup(x => x.Update(null, m));
+        _validator
+            .Setup(x => x.ValidateAsync(m, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new ValidationResult());
 
-        this._repository
-           .Setup(x => x.Monsters.Update(id, null, m));
-
-        MonsterController sut = new MonsterController(_repository.Object);
-
-        ActionResult result = await sut.Update(id, m);
+        IResult result = await MonsterEndpoints.UpdateMonsterAsync(id, m, _repository.Object, _validator.Object);
         NotFoundObjectResult objectResults = (NotFoundObjectResult)result;
         result.Should().BeOfType<NotFoundObjectResult>();
         Assert.Equal($"The monster with ID = {id} not found.", objectResults.Value);
@@ -150,18 +144,19 @@ public class MonsterControllerTests
         const int id = 1;
         Monster[] monsters = MonsterFixture.GetMonstersMock().ToArray();
 
-        this._repository
-            .Setup(x => x.Monsters.FindAsync(id))
-            .ReturnsAsync(monsters[0]);
+        _repository
+            .Setup(x => x.FindAsync(id))
+            .ReturnsAsync(() => monsters[0]);
 
-        this._repository
-           .Setup(x => x.Monsters.RemoveAsync(monsters[0]));
+        _repository
+           .Setup(x => x.Remove(monsters[0]));
 
-        MonsterController sut = new MonsterController(_repository.Object);
+        _repository
+            .Setup(x => x.UnitOfWork.Commit())
+            .ReturnsAsync(true);
 
-        ActionResult result = await sut.Remove(id);
-        OkResult objectResults = (OkResult)result;
-        objectResults.StatusCode.Should().Be(200);
+        IResult result = await MonsterEndpoints.DeleteMonsterAsync(id, _repository.Object);
+        result.Should().BeOfType<NoContent>();
     }
 
     [Fact]
@@ -169,19 +164,21 @@ public class MonsterControllerTests
     {
         const int id = 123;
 
-        this._repository
-            .Setup(x => x.Monsters.FindAsync(id))
+        _repository
+           .Setup(x => x.Remove(null));
+
+        _repository
+            .Setup(x => x.FindAsync(id))
             .ReturnsAsync(() => null);
 
-        this._repository
-           .Setup(x => x.Monsters.RemoveAsync(null));
-
-        MonsterController sut = new MonsterController(_repository.Object);
-
-        ActionResult result = await sut.Remove(id);
-        NotFoundObjectResult objectResults = (NotFoundObjectResult)result;
-        result.Should().BeOfType<NotFoundObjectResult>();
-        Assert.Equal($"The monster with ID = {id} not found.", objectResults.Value);
+        _repository
+            .Setup(x => x.UnitOfWork.Commit())
+            .ReturnsAsync(false);
+        
+        var result = await MonsterEndpoints.DeleteMonsterAsync(id, _repository.Object);
+        result.Should().BeOfType<NotFound<string>>();
+        var notFound = result as NotFound<string>;
+        Assert.Equal($"The monster with ID = {id} not found.", notFound.Value);
     }
 
     [Fact]

@@ -13,7 +13,7 @@ public class MonsterRepository : IMonsterRepository
     {
         _context = context;
     }
-    
+
     public ValueTask<EntityEntry<Monster>> AddAsync(Monster monster)
     {
         return _context.Set<Monster>().AddAsync(monster);
@@ -34,16 +34,19 @@ public class MonsterRepository : IMonsterRepository
         return await _context.Set<Monster>().ToArrayAsync();
     }
 
-    public async Task<EntityEntry<Monster>?> RemoveAsync(Monster monster)
+    public void Remove(Monster monster)
     {
-        return monster == null ? null : _context.Set<Monster>().Remove(monster);
+        if (monster != null)
+        {
+            _context.Set<Monster>().Remove(monster);
+        }
     }
 
     public void Update(Monster oldMonster, Monster newMonster)
     {
         if (oldMonster != null)
         {
-            _context.Entry<Monster>(oldMonster).CurrentValues.SetValues(newMonster);
+            _context.Entry(oldMonster).CurrentValues.SetValues(newMonster);
         }
     }
 }

@@ -10,6 +10,6 @@ public interface IMonsterRepository : IRepository
     public Task AddAsync(IEnumerable<Monster> monsters);
     public ValueTask<Monster?> FindAsync(int? id);
     public Task<Monster[]> GetAllAsync();
-    public Task<EntityEntry<Monster>?> RemoveAsync(Monster monster);
+    public void Remove(Monster monster);
     public void Update(Monster oldMonster, Monster newMonster);
 }
