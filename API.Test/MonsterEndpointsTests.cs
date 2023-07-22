@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Threading;
 using API.Endpoints;
 using API.Test.Fixtures;
 using API.Validators;
@@ -24,7 +25,7 @@ public class MonsterEndpointsTests
         _repository = new Mock<IMonsterRepository>();
         _validator = new Mock<IValidator<Monster>>();
     }
-    
+
     [Fact]
     public async Task Get_OnSuccess_ReturnsListOfMonsters()
     {
@@ -33,10 +34,9 @@ public class MonsterEndpointsTests
         this._repository
             .Setup(x => x.GetAllAsync())
             .ReturnsAsync(monsters);
-        
+
         IResult result = await MonsterEndpoints.GetAllMonstersAsync(_repository.Object);
-        OkObjectResult objectResults = (OkObjectResult) result;
-        objectResults?.Value.Should().BeOfType<Monster[]>();
+        result.Should().BeOfType<Ok<Monster[]>>();
     }
 
     [Fact]
@@ -64,15 +64,15 @@ public class MonsterEndpointsTests
             .ReturnsAsync(() => null);
 
         IResult result = await MonsterEndpoints.GetMonsterByIdAsync(id, _repository.Object);
-        NotFoundObjectResult objectResults = (NotFoundObjectResult)result;
-        result.Should().BeOfType<NotFoundObjectResult>();
-        Assert.Equal($"The monster with ID = {id} not found.", objectResults.Value);
+        result.Should().BeOfType<NotFound<string>>();
+        var notFound = result as NotFound<string>;
+        Assert.Equal($"The monster with ID = {id} not found.", notFound.Value);
     }
 
     [Fact]
     public async Task Post_OnSuccess_CreateMonster()
     {
-        Monster m = new Monster()
+        Monster m = new()
         {
             Name = "Monster Test",
             Attack = 50,
@@ -81,16 +81,23 @@ public class MonsterEndpointsTests
             Speed = 60,
             ImageUrl = ""
         };
+        string BaseRoute = "monsters";
 
-        _repository
-            .Setup(x => x.AddAsync(m));
         _validator
             .Setup(x => x.ValidateAsync(m, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ValidationResult());
 
+        _repository
+            .Setup(x => x.AddAsync(m));
+
+        _repository
+            .Setup(x => x.UnitOfWork.Commit())
+            .ReturnsAsync(true);
+
         IResult result = await MonsterEndpoints.CreateMonsterAsync(m, _repository.Object, _validator.Object);
-        OkObjectResult objectResults = (OkObjectResult)result;
-        objectResults?.Value.Should().BeOfType<Monster>();
+        result.Should().BeOfType<Created<Monster>>();
+        var created = result as Created<Monster>;
+        Assert.Equal(created.Location, $"/{BaseRoute}/{m.Id}");
     }
 
     [Fact]
@@ -99,20 +106,29 @@ public class MonsterEndpointsTests
         const int id = 1;
         Monster[] monsters = MonsterFixture.GetMonstersMock().ToArray();
 
-        Monster m = new Monster()
+        Monster m = new()
         {
             Name = "Monster Update"
         };
 
-        _repository
-           .Setup(x => x.Update(monsters[0], m));
+
         _validator
             .Setup(x => x.ValidateAsync(m, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ValidationResult());
 
+        _repository
+            .Setup(x => x.FindAsync(id))
+            .ReturnsAsync(monsters[0]);
+
+        _repository
+           .Setup(x => x.Update(monsters[0], m));
+
+        _repository
+            .Setup(x => x.UnitOfWork.Commit())
+            .ReturnsAsync(true);
+
         IResult result = await MonsterEndpoints.UpdateMonsterAsync(id, m, _repository.Object, _validator.Object);
-        OkResult objectResults = (OkResult)result;
-        objectResults.StatusCode.Should().Be(200);
+        result.Should().BeOfType<Ok<Monster>>();        
     }
 
     [Fact]
@@ -120,21 +136,22 @@ public class MonsterEndpointsTests
     {
         const int id = 123;
 
-        Monster m = new Monster()
+        Monster m = new()
         {
             Name = "Monster Update"
         };
 
-        _repository
-           .Setup(x => x.Update(null, m));
         _validator
             .Setup(x => x.ValidateAsync(m, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ValidationResult());
 
+        _repository
+           .Setup(x => x.Update(null, m));
+
         IResult result = await MonsterEndpoints.UpdateMonsterAsync(id, m, _repository.Object, _validator.Object);
-        NotFoundObjectResult objectResults = (NotFoundObjectResult)result;
-        result.Should().BeOfType<NotFoundObjectResult>();
-        Assert.Equal($"The monster with ID = {id} not found.", objectResults.Value);
+        result.Should().BeOfType<NotFound<string>>();
+        var notFound = result as NotFound<string>;
+        Assert.Equal($"The monster with ID = {id} not found.", notFound.Value);
     }
 
 
@@ -174,7 +191,7 @@ public class MonsterEndpointsTests
         _repository
             .Setup(x => x.UnitOfWork.Commit())
             .ReturnsAsync(false);
-        
+
         var result = await MonsterEndpoints.DeleteMonsterAsync(id, _repository.Object);
         result.Should().BeOfType<NotFound<string>>();
         var notFound = result as NotFound<string>;
@@ -192,7 +209,7 @@ public class MonsterEndpointsTests
     {
         // @TODO missing implementation
     }
-    
+
     [Fact]
     public async Task Post_BadRequest_ImportCsv_With_Nonexistent_Column()
     {

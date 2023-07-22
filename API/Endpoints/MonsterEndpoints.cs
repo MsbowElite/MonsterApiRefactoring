@@ -43,7 +43,8 @@ namespace API.Endpoints
             monsters.MapPut($"{Slash}{{id}}", UpdateMonsterAsync)
                 .WithName("UpdateMonster")
                 .Accepts<Monster>(ContentType)
-                .Produces<Monster>(200).Produces<IEnumerable<ValidationFailure>>(400);
+                .Produces<Monster>(200).Produces<IEnumerable<ValidationFailure>>(400)
+                .Produces<string>(422);
 
             monsters.MapDelete($"{Slash}{{id}}", DeleteMonsterAsync)
                 .WithName("DeleteMonster")
@@ -91,8 +92,11 @@ namespace API.Endpoints
             if (!validationResult.IsValid)
                 return Results.BadRequest(validationResult.Errors);
 
-            repository.Update(await repository.FindAsync(id), monster);
-            return !await repository.UnitOfWork.Commit() ? Results.NotFound() : Results.Ok(monster);
+            var foundMonster = await repository.FindAsync(id);
+            if (foundMonster is null)
+                return Results.NotFound($"The monster with ID = {id} not found.");
+
+            return !await repository.UnitOfWork.Commit() ? Results.UnprocessableEntity() : Results.Ok(monster);
         }
         public static async Task<IResult> DeleteMonsterAsync(
             int id, IMonsterRepository repository)
