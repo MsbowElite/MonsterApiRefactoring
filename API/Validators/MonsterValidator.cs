@@ -7,6 +7,8 @@ namespace API.Validators
     {
         public MonsterValidator()
         {
+            RuleFor(monster => monster.Name)
+                .NotEmpty();
         }
     }
 }

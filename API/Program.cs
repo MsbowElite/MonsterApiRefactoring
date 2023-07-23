@@ -25,3 +25,5 @@ app.UseSwaggerUI();
 app.UseCors("CorsPolicy");
 app.UseHttpsRedirection();
 app.Run();
+
+public partial class Program { }

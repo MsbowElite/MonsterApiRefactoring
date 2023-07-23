@@ -15,7 +15,7 @@ using Moq;
 
 namespace API.Test;
 
-public class MonsterEndpointsTests
+public partial class MonsterEndpointsTests
 {
     private readonly Mock<IMonsterRepository> _repository;
     private readonly Mock<IValidator<Monster>> _validator;
@@ -99,61 +99,6 @@ public class MonsterEndpointsTests
         var created = result as Created<Monster>;
         Assert.Equal(created.Location, $"/{BaseRoute}/{m.Id}");
     }
-
-    [Fact]
-    public async Task Put_OnSuccess_UpdateMonster()
-    {
-        const int id = 1;
-        Monster[] monsters = MonsterFixture.GetMonstersMock().ToArray();
-
-        Monster m = new()
-        {
-            Name = "Monster Update"
-        };
-
-
-        _validator
-            .Setup(x => x.ValidateAsync(m, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ValidationResult());
-
-        _repository
-            .Setup(x => x.FindAsync(id))
-            .ReturnsAsync(monsters[0]);
-
-        _repository
-           .Setup(x => x.Update(monsters[0], m));
-
-        _repository
-            .Setup(x => x.UnitOfWork.Commit())
-            .ReturnsAsync(true);
-
-        IResult result = await MonsterEndpoints.UpdateMonsterAsync(id, m, _repository.Object, _validator.Object);
-        result.Should().BeOfType<Ok<Monster>>();        
-    }
-
-    [Fact]
-    public async Task Put_OnNoMonsterFound_Returns404()
-    {
-        const int id = 123;
-
-        Monster m = new()
-        {
-            Name = "Monster Update"
-        };
-
-        _validator
-            .Setup(x => x.ValidateAsync(m, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ValidationResult());
-
-        _repository
-           .Setup(x => x.Update(null, m));
-
-        IResult result = await MonsterEndpoints.UpdateMonsterAsync(id, m, _repository.Object, _validator.Object);
-        result.Should().BeOfType<NotFound<string>>();
-        var notFound = result as NotFound<string>;
-        Assert.Equal($"The monster with ID = {id} not found.", notFound.Value);
-    }
-
 
     [Fact]
     public async Task Delete_OnSuccess_RemoveMonster()

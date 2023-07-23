@@ -5,6 +5,7 @@ using FluentValidation;
 using FluentValidation.Results;
 using Lib.Repository.Entities;
 using Lib.Repository.Repository;
+using Microsoft.AspNetCore.Http.HttpResults;
 using System.Globalization;
 
 namespace API.Endpoints
@@ -78,7 +79,13 @@ namespace API.Endpoints
         }
         public static async Task<IResult> GetAllMonstersAsync(IMonsterRepository repository)
         {
-            return Results.Ok(await repository.GetAllAsync());
+            try
+            {
+                return Results.Ok(await repository.GetAllAsync());
+            }catch(Exception ex)
+            {
+                return Results.Ok();
+            }
         }
         public static async Task<IResult> GetMonsterByIdAsync(int id, IMonsterRepository repository)
         {
@@ -96,7 +103,7 @@ namespace API.Endpoints
             if (foundMonster is null)
                 return Results.NotFound($"The monster with ID = {id} not found.");
 
-            return !await repository.UnitOfWork.Commit() ? Results.UnprocessableEntity() : Results.Ok(monster);
+            return !await repository.UnitOfWork.Commit() ? Results.UnprocessableEntity(foundMonster) : Results.Ok(monster);
         }
         public static async Task<IResult> DeleteMonsterAsync(
             int id, IMonsterRepository repository)
