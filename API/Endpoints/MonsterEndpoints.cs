@@ -79,13 +79,7 @@ namespace API.Endpoints
         }
         public static async Task<IResult> GetAllMonstersAsync(IMonsterRepository repository)
         {
-            try
-            {
-                return Results.Ok(await repository.GetAllAsync());
-            }catch(Exception ex)
-            {
-                return Results.Ok();
-            }
+            return Results.Ok(await repository.GetAllAsync());
         }
         public static async Task<IResult> GetMonsterByIdAsync(int id, IMonsterRepository repository)
         {

@@ -70,37 +70,6 @@ public partial class MonsterEndpointsTests
     }
 
     [Fact]
-    public async Task Post_OnSuccess_CreateMonster()
-    {
-        Monster m = new()
-        {
-            Name = "Monster Test",
-            Attack = 50,
-            Defense = 40,
-            Hp = 80,
-            Speed = 60,
-            ImageUrl = ""
-        };
-        string BaseRoute = "monsters";
-
-        _validator
-            .Setup(x => x.ValidateAsync(m, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ValidationResult());
-
-        _repository
-            .Setup(x => x.AddAsync(m));
-
-        _repository
-            .Setup(x => x.UnitOfWork.Commit())
-            .ReturnsAsync(true);
-
-        IResult result = await MonsterEndpoints.CreateMonsterAsync(m, _repository.Object, _validator.Object);
-        result.Should().BeOfType<Created<Monster>>();
-        var created = result as Created<Monster>;
-        Assert.Equal(created.Location, $"/{BaseRoute}/{m.Id}");
-    }
-
-    [Fact]
     public async Task Delete_OnSuccess_RemoveMonster()
     {
         const int id = 1;

@@ -44,7 +44,7 @@ public partial class MonsterEndpointsTests
     }
 
     [Fact]
-    public async Task Put_OnDatabaseOffline_UpdateMonster()
+    public async Task Put_OnDatabaseOffline_Returns422()
     {
         const int id = 1;
         Monster[] monsters = MonsterFixture.GetMonstersMock().ToArray();
