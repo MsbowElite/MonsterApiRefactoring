@@ -128,14 +128,14 @@ namespace API.Endpoints
                 {
                     return Results.BadRequest("The extension is not supporting.");
                 }
-
-                using (var reader = new StreamReader(filepath))
+                try
                 {
-                    using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
+                    using (var reader = new StreamReader(filepath))
                     {
-                        try
+                        using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
                         {
                             var records = csv.GetRecords<MonsterToImport>().ToList();
+
                             var monsters = records.Select(x => new Monster()
                             {
                                 Name = x.name,
@@ -148,16 +148,16 @@ namespace API.Endpoints
 
                             await repository.AddAsync(monsters);
                             await repository.UnitOfWork.Commit();
-
-                            System.IO.File.Delete(filepath);
-                            return Results.NoContent();
-                        }
-                        catch (Exception)
-                        {
-                            System.IO.File.Delete(filepath);
-                            return Results.BadRequest("Wrong data mapping.");
                         }
                     }
+
+                    File.Delete(filepath);
+                    return Results.NoContent();
+                }
+                catch (Exception)
+                {
+                    File.Delete(filepath);
+                    return Results.BadRequest("Wrong data mapping.");
                 }
             }
             catch (Exception)

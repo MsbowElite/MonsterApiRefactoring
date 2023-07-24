@@ -11,6 +11,7 @@ using Lib.Repository.Repository;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.OpenApi.Any;
 using Moq;
 
 namespace API.Test;
@@ -115,18 +116,92 @@ public partial class MonsterEndpointsTests
     [Fact]
     public async Task Post_OnSuccess_ImportCsvToMonster()
     {
-        // @TODO missing implementation
+        var directory = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+        var path = Path.Combine($"{directory}/Files/", "monsters-correct.csv");
+
+        MemoryStream ms = new();
+        FileStream fileStream = new(path, FileMode.Open, FileAccess.Read);
+        {
+            byte[] bytes = new byte[fileStream.Length];
+            fileStream.Read(bytes, 0, (int)fileStream.Length);
+            ms.Write(bytes, 0, (int)fileStream.Length);
+        }
+        var file = new FormFile(fileStream, 0, fileStream.Length, "name", fileStream.Name);
+
+        _repository
+            .Setup(x => x.AddAsync(It.IsAny<IEnumerable<Monster>>()));
+
+        _repository
+            .Setup(x => x.UnitOfWork.Commit())
+            .ReturnsAsync(true);
+
+        var result = await MonsterEndpoints.UploadCsvToImportAsync(file, _repository.Object);
+        result.Should().BeOfType<NoContent>();
     }
 
     [Fact]
     public async Task Post_BadRequest_ImportCsv_With_Nonexistent_Monster()
     {
-        // @TODO missing implementation
+        var directory = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+        var path = Path.Combine($"{directory}/Files/", "monsters-empty-monster.csv");
+
+        MemoryStream ms = new();
+        FileStream fileStream = new(path, FileMode.Open, FileAccess.Read);
+        {
+            byte[] bytes = new byte[fileStream.Length];
+            fileStream.Read(bytes, 0, (int)fileStream.Length);
+            ms.Write(bytes, 0, (int)fileStream.Length);
+        }
+        var file = new FormFile(fileStream, 0, fileStream.Length, "name", fileStream.Name);
+
+        _repository
+            .Setup(x => x.AddAsync(It.IsAny<IEnumerable<Monster>>()));
+
+        var result = await MonsterEndpoints.UploadCsvToImportAsync(file, _repository.Object);
+        result.Should().BeOfType<BadRequest<string>>();
+        var badRequest = result as BadRequest<string>;
+        Assert.Equal("Wrong data mapping.", badRequest.Value);
     }
 
     [Fact]
     public async Task Post_BadRequest_ImportCsv_With_Nonexistent_Column()
     {
-        // @TODO missing implementation
+        var directory = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+        var path = Path.Combine($"{directory}/Files/", "monsters-wrong-column.csv");
+
+        MemoryStream ms = new();
+        FileStream fileStream = new(path, FileMode.Open, FileAccess.Read);
+        {
+            byte[] bytes = new byte[fileStream.Length];
+            fileStream.Read(bytes, 0, (int)fileStream.Length);
+            ms.Write(bytes, 0, (int)fileStream.Length);
+        }
+        var file = new FormFile(fileStream, 0, fileStream.Length, "name", fileStream.Name);
+
+        var result = await MonsterEndpoints.UploadCsvToImportAsync(file, _repository.Object);
+        result.Should().BeOfType<BadRequest<string>>();
+        var badRequest = result as BadRequest<string>;
+        Assert.Equal("Wrong data mapping.", badRequest.Value);
+    }
+
+    [Fact]
+    public async Task Post_BadRequest_ImportCsv_With_Txt_File()
+    {
+        var directory = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+        var path = Path.Combine($"{directory}/Files/", "Test.txt");
+
+        MemoryStream ms = new();
+        FileStream fileStream = new(path, FileMode.Open, FileAccess.Read);
+        {
+            byte[] bytes = new byte[fileStream.Length];
+            fileStream.Read(bytes, 0, (int)fileStream.Length);
+            ms.Write(bytes, 0, (int)fileStream.Length);
+        }
+        var file = new FormFile(fileStream, 0, fileStream.Length, "name", fileStream.Name);
+
+        var result = await MonsterEndpoints.UploadCsvToImportAsync(file, _repository.Object);
+        result.Should().BeOfType<BadRequest<string>>();
+        var badRequest = result as BadRequest<string>;
+        Assert.Equal("The extension is not supporting.", badRequest.Value);
     }
 }

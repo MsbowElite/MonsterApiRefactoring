@@ -30,4 +30,19 @@
       <ProjectReference Include="..\Lib.Repository\Lib.Repository.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <None Update="Files\monsters-correct.csv">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+      <None Update="Files\monsters-empty-monster.csv">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+      <None Update="Files\monsters-wrong-column.csv">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+      <None Update="Files\Test.txt">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+    </ItemGroup>
+
 </Project>
