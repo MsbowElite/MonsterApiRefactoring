@@ -30,7 +30,8 @@ namespace API.Endpoints
             monsters.MapPost(Slash, CreateMonsterAsync)
                 .WithName("CreateMonster")
                 .Accepts<Monster>(ContentType)
-                .Produces<Monster>(201).Produces<IEnumerable<ValidationFailure>>(400);
+                .Produces<Monster>(201)
+                .Produces<IEnumerable<ValidationFailure>>(400);
 
             monsters.MapGet(Slash, GetAllMonstersAsync)
                 .WithName("GetMonsters")
@@ -39,22 +40,27 @@ namespace API.Endpoints
             monsters.MapGet($"{Slash}{{id}}", GetMonsterByIdAsync)
                 .WithName("GetMonster")
                 .Accepts<Monster>(ContentType)
-                .Produces<Monster>(200).Produces(404);
+                .Produces<Monster>(200)
+                .Produces<string>(404);
 
             monsters.MapPut($"{Slash}{{id}}", UpdateMonsterAsync)
                 .WithName("UpdateMonster")
                 .Accepts<Monster>(ContentType)
-                .Produces<Monster>(200).Produces<IEnumerable<ValidationFailure>>(400)
-                .Produces<string>(422);
+                .Produces<Monster>(200)
+                .Produces<IEnumerable<ValidationFailure>>(400)
+                .Produces<string>(404)
+                .Produces<Monster>(422);
 
             monsters.MapDelete($"{Slash}{{id}}", DeleteMonsterAsync)
                 .WithName("DeleteMonster")
-                .Produces<Monster>(204).Produces<IEnumerable<ValidationFailure>>(400);
+                .Produces<string>(404)
+                .Produces(204);
 
             monsters.MapPost($"{Slash}UploadCsvToImport", UploadCsvToImportAsync)
                 .WithName("UploadCsvToImport")
                 .Accepts<Monster>(ContentType)
-                .Produces(204).Produces(400);
+                .Produces(204)
+                .Produces<string>(400);
         }
 
         public static async Task<IResult> CreateMonsterAsync(Monster monster, IMonsterRepository repository, IValidator<Monster> validator)
