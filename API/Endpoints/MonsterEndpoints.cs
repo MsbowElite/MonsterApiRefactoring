@@ -103,6 +103,7 @@ namespace API.Endpoints
             if (foundMonster is null)
                 return Results.NotFound($"The monster with ID = {id} not found.");
 
+            repository.Update(foundMonster, monster);
             return !await repository.UnitOfWork.Commit() ? Results.UnprocessableEntity(foundMonster) : Results.Ok(monster);
         }
         public static async Task<IResult> DeleteMonsterAsync(
