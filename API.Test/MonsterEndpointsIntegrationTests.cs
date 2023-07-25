@@ -23,12 +23,8 @@ namespace API.Test
             _monster = apiApplicationFixture.Monster;
         }
 
-        /// <summary>
-        /// PostCreateMonster
-        /// </summary>
-        /// <returns></returns>
         [Fact]
-        public async Task A()
+        public async Task A_PostCreateMonster()
         {
             using var client = _application.CreateClient();
 
@@ -42,12 +38,8 @@ namespace API.Test
             _monster.Id = monsterResponse.Id;
         }
 
-        /// <summary>
-        /// GetReturnsListOfMonsters
-        /// </summary>
-        /// <returns></returns>
         [Fact]
-        public async Task B()
+        public async Task B_GetReturnsListOfMonsters()
         {
             using var client = _application.CreateClient();
 
@@ -56,12 +48,8 @@ namespace API.Test
             listMonsters.Should().HaveCountGreaterThan(0);
         }
 
-        /// <summary>
-        /// PutUpdateMonster
-        /// </summary>
-        /// <returns></returns>
         [Fact]
-        public async Task C()
+        public async Task C_PutUpdateMonster()
         {
             using var client = _application.CreateClient();
 
@@ -72,12 +60,8 @@ namespace API.Test
             _monster.Should().BeEquivalentTo(monsterResponse);
         }
 
-        /// <summary>
-        /// GetReturnsOneMonsterById
-        /// </summary>
-        /// <returns></returns>
         [Fact]
-        public async Task D()
+        public async Task D_GetReturnsOneMonsterById()
         {
             using var client = _application.CreateClient();
             var response = await client.GetAsync($"/monsters/{_monster.Id}");
@@ -85,24 +69,16 @@ namespace API.Test
             _monster.Should().BeEquivalentTo(monsterResponse);
         }
 
-        /// <summary>
-        /// DeleteRemoveMonster
-        /// </summary>
-        /// <returns></returns>
         [Fact]
-        public async Task E()
+        public async Task E_DeleteRemoveMonster()
         {
             using var client = _application.CreateClient();
             var response = await client.DeleteAsync($"/monsters/{_monster.Id}");
             response.StatusCode.Should().Be(HttpStatusCode.NoContent);
         }
 
-        /// <summary>
-        /// GetReturnsEmptyList
-        /// </summary>
-        /// <returns></returns>
         [Fact]
-        public async Task F()
+        public async Task F_GetReturnsEmptyList()
         {
             using var client = _application.CreateClient();
 

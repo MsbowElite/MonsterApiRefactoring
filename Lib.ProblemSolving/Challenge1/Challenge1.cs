@@ -15,17 +15,17 @@ public static class Challenge1
 
     private static decimal GetPositiveFraction(List<int> numbersList)
     {
-        return numbersList.Where(w => w > 0).Count() / (decimal)numbersList.Count();
+        return Math.Round(numbersList.Where(w => w > 0).Count() / (decimal)numbersList.Count(), 6, MidpointRounding.AwayFromZero);
     }
 
     private static decimal GetNegativeFraction(List<int> numbersList)
     {
-        return numbersList.Where(w => w < 0).Count() / (decimal)numbersList.Count();
+        return Math.Round(numbersList.Where(w => w < 0).Count() / (decimal)numbersList.Count(), 6, MidpointRounding.AwayFromZero);
     }
 
     private static decimal GetZeroFraction(List<int> numbersList)
     {
-        return numbersList.Where(w => w == 0).Count() / (decimal)numbersList.Count();
+        return Math.Round(numbersList.Where(w => w == 0).Count() / (decimal)numbersList.Count(), 6, MidpointRounding.AwayFromZero);
     }
 }
 
