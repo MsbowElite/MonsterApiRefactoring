@@ -16,6 +16,8 @@ builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 builder.Configuration.ConfigureLogging(builder.Services);
 builder.Configuration.ConfigureSerilog();
 
+builder.Services.AddMediatR(c => c.RegisterServicesFromAssemblyContaining<Program>());
+
 WebApplication app = builder.Build();
 
 //app.UseAuthorization();
