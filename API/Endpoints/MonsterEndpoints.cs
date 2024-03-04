@@ -1,26 +1,28 @@
 ﻿using API.Endpoints.Internal;
+using API.Extensions;
+using API.Infrastructure;
 using API.Models;
+using Application.Monsters.Create;
+using Application.Monsters.GetById;
+using Application.Monsters.GetMonsters;
+using Application.Monsters.Remove;
+using Application.Monsters.Update;
 using CsvHelper;
+using Domain.Monsters;
 using FluentValidation;
 using FluentValidation.Results;
-using Lib.Repository.Entities;
-using Lib.Repository.Repository;
-using Microsoft.AspNetCore.Http.HttpResults;
+using Mapster;
+using MediatR;
 using System.Globalization;
 
 namespace API.Endpoints
 {
-    public class MonsterEndpoints : IEndpoints
+    public class MonsterEndpoints() : IEndpoints
     {
         private const string ContentType = "application/json";
         private const string Tag = "Monsters";
         private const string BaseRoute = "monsters";
         private const string Slash = "/";
-
-        public static void AddServices(IServiceCollection services, IConfiguration configuration)
-        {
-            services.AddScoped<IMonsterRepository, MonsterRepository>();
-        }
 
         public static void DefineEndpoints(IEndpointRouteBuilder app)
         {
@@ -33,7 +35,7 @@ namespace API.Endpoints
                 .Produces<Monster>(201)
                 .Produces<IEnumerable<ValidationFailure>>(400);
 
-            monsters.MapGet(Slash, GetAllMonstersAsync)
+            monsters.MapGet(Slash, GetMonstersAsync)
                 .WithName("GetMonsters")
                 .Produces<IEnumerable<Monster>>(200);
 
@@ -56,121 +58,127 @@ namespace API.Endpoints
                 .Produces<string>(404)
                 .Produces(204);
 
-            monsters.MapPost($"{Slash}UploadCsvToImport", UploadCsvToImportAsync)
-                .WithName("UploadCsvToImport")
-                .Accepts<Monster>(ContentType)
-                .Produces(204)
-                .Produces<string>(400);
+            //monsters.MapPost($"{Slash}UploadCsvToImport", UploadCsvToImportAsync)
+            //    .WithName("UploadCsvToImport")
+            //    .Accepts<Monster>(ContentType)
+            //    .Produces(204)
+            //    .Produces<string>(400);
         }
 
-        public static async Task<IResult> CreateMonsterAsync(Monster monster, IMonsterRepository repository, IValidator<Monster> validator)
+        public static async Task<IResult> CreateMonsterAsync(
+            CreateMonsterRequest request,
+            ISender sender,
+            CancellationToken cancellationToken)
         {
-            var validationResult = await validator.ValidateAsync(monster);
-            if (!validationResult.IsValid)
-            {
-                return Results.BadRequest(validationResult.Errors);
-            }
+            //var validationResult = await validator.ValidateAsync(monster);
+            //if (!validationResult.IsValid)
+            //{
+            //    return Results.BadRequest(validationResult.Errors);
+            //}
 
-            await repository.AddAsync(monster);
+            //await repository.AddAsync(monster);
 
-            if (!await repository.UnitOfWork.Commit())
-            {
-                return Results.BadRequest(new List<ValidationFailure>
-                {
-                    new("Id", "A monster with this Id already exists")
-                });
-            }
+            //if (!await repository.UnitOfWork.Commit())
+            //{
+            //    return Results.BadRequest(new List<ValidationFailure>
+            //    {
+            //        new("Id", "A monster with this Id already exists")
+            //    });
+            //}
+            var command = request.Adapt<CreateMonsterCommand>();
+            var monsterId = await sender.Send(command, cancellationToken);
 
-            return Results.Created($"/{BaseRoute}/{monster.Id}", monster);
+            return Results.Created($"/{BaseRoute}/{monsterId}", monsterId);
         }
-        public static async Task<IResult> GetAllMonstersAsync(IMonsterRepository repository)
+
+        public static async Task<IResult> GetMonstersAsync(
+            ISender sender, CancellationToken cancellationToken)
         {
-            return Results.Ok(await repository.GetAllAsync());
+            return Results.Ok(await sender.Send(new GetMonsersQuery()));
         }
-        public static async Task<IResult> GetMonsterByIdAsync(int id, IMonsterRepository repository)
+        public static async Task<IResult> GetMonsterByIdAsync(Guid MonsterId, 
+            ISender sender, CancellationToken cancellationToken)
         {
-            var monster = await repository.FindAsync(id);
-            return monster is not null ? Results.Ok(monster) : Results.NotFound($"The monster with ID = {id} not found.");
+            var monster = (await sender.Send(new GetMonserByIdQuery(MonsterId))).Value;
+            return monster is not null ? Results.Ok(monster) : Results.NotFound($"The monster with ID = {MonsterId} not found.");
         }
-        public static async Task<IResult> UpdateMonsterAsync(int id, Monster monster, IMonsterRepository repository, IValidator<Monster> validator)
+        public static async Task<IResult> UpdateMonsterAsync(Guid MonsterId, UpdateMonsterRequest monster, 
+            ISender sender, CancellationToken cancellationToken)
         {
-            monster.Id = id;
-            ValidationResult validationResult = await validator.ValidateAsync(monster);
-            if (!validationResult.IsValid)
-                return Results.BadRequest(validationResult.Errors);
+            //ValidationResult validationResult = await validator.ValidateAsync(monster);
+            //if (!validationResult.IsValid)
+            //    return Results.BadRequest(validationResult.Errors);
 
-            var foundMonster = await repository.FindAsync(id);
-            if (foundMonster is null)
-                return Results.NotFound($"The monster with ID = {id} not found.");
+            var command = monster.Adapt<UpdateMonsterCommand>();
+            var result = await sender.Send(command, cancellationToken);
 
-            repository.Update(foundMonster, monster);
-            return !await repository.UnitOfWork.Commit() ? Results.UnprocessableEntity(foundMonster) : Results.Ok(monster);
+            return result.Match(Results.Ok, CustomResults.Problem);
         }
-        public static async Task<IResult> DeleteMonsterAsync(
-            int id, IMonsterRepository repository)
+        public static async Task<IResult> DeleteMonsterAsync(Guid monsterId,
+            ISender sender, CancellationToken cancellationToken)
         {
-            repository.Remove(await repository.FindAsync(id));
-            return await repository.UnitOfWork.Commit() ? Results.NoContent() : Results.NotFound($"The monster with ID = {id} not found.");
+            var result = await sender.Send(new RemoveMonsterCommand(monsterId), cancellationToken);
+            return result.Match(Results.NoContent, CustomResults.Problem);
         }
-        public static async Task<IResult> UploadCsvToImportAsync(IFormFile file, IMonsterRepository repository)
-        {
-            try
-            {
-                string ext = Path.GetExtension(file.FileName);
-                string filename = Guid.NewGuid().ToString() + ext;
-                string directory = Path.Combine(Directory.GetCurrentDirectory(), "Temp");
-                string filepath = Path.Combine(directory, filename);
+        //public static async Task<IResult> UploadCsvToImportAsync(IFormFile file, IMonsterRepository repository)
+        //{
+        //    try
+        //    {
+        //        string ext = Path.GetExtension(file.FileName);
+        //        string filename = Guid.NewGuid().ToString() + ext;
+        //        string directory = Path.Combine(Directory.GetCurrentDirectory(), "Temp");
+        //        string filepath = Path.Combine(directory, filename);
 
-                if (!Directory.Exists(directory))
-                {
-                    Directory.CreateDirectory(directory);
-                }
+        //        if (!Directory.Exists(directory))
+        //        {
+        //            Directory.CreateDirectory(directory);
+        //        }
 
-                await using (FileStream fs = System.IO.File.Create(filepath))
-                {
-                    await file.CopyToAsync(fs);
-                }
+        //        await using (FileStream fs = System.IO.File.Create(filepath))
+        //        {
+        //            await file.CopyToAsync(fs);
+        //        }
 
-                if (ext != ".csv")
-                {
-                    return Results.BadRequest("The extension is not supporting.");
-                }
-                try
-                {
-                    using (var reader = new StreamReader(filepath))
-                    {
-                        using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
-                        {
-                            var records = csv.GetRecords<MonsterToImport>().ToList();
+        //        if (ext != ".csv")
+        //        {
+        //            return Results.BadRequest("The extension is not supporting.");
+        //        }
+        //        try
+        //        {
+        //            using (var reader = new StreamReader(filepath))
+        //            {
+        //                using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
+        //                {
+        //                    var records = csv.GetRecords<MonsterToImport>().ToList();
 
-                            var monsters = records.Select(x => new Monster()
-                            {
-                                Name = x.name,
-                                Attack = x.attack,
-                                Defense = x.defense,
-                                Speed = x.speed,
-                                Hp = x.hp,
-                                ImageUrl = x.imageUrl
-                            });
+        //                    var monsters = records.Select(x => new Monster()
+        //                    {
+        //                        Name = x.name,
+        //                        Attack = x.attack,
+        //                        Defense = x.defense,
+        //                        Speed = x.speed,
+        //                        Hp = x.hp,
+        //                        ImageUrl = x.imageUrl
+        //                    });
 
-                            await repository.AddAsync(monsters);
-                            await repository.UnitOfWork.Commit();
-                        }
-                    }
+        //                    await repository.AddAsync(monsters);
+        //                    await repository.UnitOfWork.Commit();
+        //                }
+        //            }
 
-                    File.Delete(filepath);
-                    return Results.NoContent();
-                }
-                catch (Exception)
-                {
-                    File.Delete(filepath);
-                    return Results.BadRequest("Wrong data mapping.");
-                }
-            }
-            catch (Exception)
-            {
-                return Results.BadRequest("Wrong data mapping.");
-            }
-        }
+        //            File.Delete(filepath);
+        //            return Results.NoContent();
+        //        }
+        //        catch (Exception)
+        //        {
+        //            File.Delete(filepath);
+        //            return Results.BadRequest("Wrong data mapping.");
+        //        }
+        //    }
+        //    catch (Exception)
+        //    {
+        //        return Results.BadRequest("Wrong data mapping.");
+        //    }
+        //}
     }
 }

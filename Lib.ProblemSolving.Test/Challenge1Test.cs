@@ -1,6 +1,3 @@
-using FluentAssertions;
-using Xunit.Abstractions;
-
 namespace Lib.ProblemSolving.Test;
 
 public class Challenge1Test

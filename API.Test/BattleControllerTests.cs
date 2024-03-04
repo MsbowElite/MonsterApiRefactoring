@@ -29,12 +29,12 @@
 //        OkObjectResult objectResults = (OkObjectResult) result;
 //        objectResults?.Value.Should().BeOfType<Battle[]>();
 //    }
-    
+
 //    [Fact]
 //    public async Task Post_BadRequest_When_StartBattle_With_nullMonster()
 //    {
 //        Monster[] monstersMock = MonsterFixture.GetMonstersMock().ToArray();
-        
+
 //        Battle b = new Battle()
 //        {
 //            MonsterA = null,
@@ -62,7 +62,7 @@
 //        result.Should().BeOfType<BadRequestObjectResult>();
 //        Assert.Equal("Missing ID", objectResults.Value);
 //    }
-    
+
 //    [Fact]
 //    public async Task Post_OnNoMonsterFound_When_StartBattle_With_NonexistentMonster()
 //    {

@@ -1,13 +1,8 @@
 ﻿using API.Test.Fixtures;
+using Domain.Monsters;
 using FluentAssertions;
-using Lib.Repository.Entities;
-using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.VisualStudio.TestPlatform.TestHost;
 using System.Net;
 using System.Net.Http.Json;
-using System.Text.Json;
 
 namespace API.Test
 {
@@ -34,8 +29,6 @@ namespace API.Test
                     monsterResponse,
                     options => options.Excluding(ex => ex.Id)
             );
-
-            _monster.Id = monsterResponse.Id;
         }
 
         [Fact]
