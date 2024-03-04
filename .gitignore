@@ -10,3 +10,5 @@ API/Migrations
 
 .vs
 .idea
+*.dcproj
+/.containers/db
