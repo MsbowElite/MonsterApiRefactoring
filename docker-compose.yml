@@ -1,0 +1,32 @@
+version: '3.4'
+
+services:
+  api:
+    image: ${DOCKER_REGISTRY-}api
+    build:
+      context: .
+      dockerfile: API/Dockerfile
+    ports:
+      - 5000:5000
+      - 5001:5001
+
+  monster-database:
+    image: postgres:latest
+    container_name: monster.database
+    environment:
+      - POSTGRES_DB=monster
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - ./.containers/db:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+
+  monster-seq:
+    image: datalust/seq:latest
+    container_name: monster.seq
+    environment:
+      - ACCEPT_EULA=Y
+    ports:
+      - 5341:5341
+      - 8081:80
