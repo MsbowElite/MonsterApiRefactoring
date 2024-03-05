@@ -7,7 +7,7 @@ using SharedKernel;
 
 namespace Infrastructure.Queries.Monsters;
 
-internal sealed class GetMonstersQueryHandler(BattleOfMonstersReadDbContext context)
+internal sealed class GetMonstersQueryHandler(BattleOfMonstersContext context)
     : IQueryHandler<GetMonsersQuery, MonsterResponse[]>
 {
     public async Task<Result<MonsterResponse[]>> Handle(

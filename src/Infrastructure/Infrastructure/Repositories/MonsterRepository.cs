@@ -1,10 +1,9 @@
 ﻿using Domain.Monsters;
 using Infrastructure.Database;
-using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Repositories;
 
-internal sealed class MonsterRepository(BattleOfMonstersWriteDbContext context) : IMonsterRepository
+internal sealed class MonsterRepository(BattleOfMonstersContext context) : IMonsterRepository
 {
     public async Task InsertAsync(Monster monster, CancellationToken cancellationToken)
     {

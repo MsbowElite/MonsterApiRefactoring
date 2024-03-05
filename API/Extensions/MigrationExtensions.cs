@@ -9,8 +9,8 @@ public static class MigrationExtensions
     {
         using IServiceScope scope = app.ApplicationServices.CreateScope();
 
-        using BattleOfMonstersWriteDbContext dbContext =
-            scope.ServiceProvider.GetRequiredService<BattleOfMonstersWriteDbContext>();
+        using BattleOfMonstersContext dbContext =
+            scope.ServiceProvider.GetRequiredService<BattleOfMonstersContext>();
 
         dbContext.Database.Migrate();
     }

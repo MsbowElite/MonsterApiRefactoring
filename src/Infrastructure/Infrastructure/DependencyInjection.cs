@@ -23,18 +23,18 @@ namespace Infrastructure
 
             string? connectionString = configuration.GetConnectionString("Database");
 
-            services.AddDbContext<BattleOfMonstersReadDbContext>(
+            services.AddDbContext<BattleOfMonstersContext>(
                 options => options
                     .UseNpgsql(connectionString)
                     .UseSnakeCaseNamingConvention()
                     .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking));
 
-            services.AddDbContext<BattleOfMonstersWriteDbContext>(
+            services.AddDbContext<BattleOfMonstersContext>(
                 (sp, options) => options
                     .UseNpgsql(connectionString)
                     .UseSnakeCaseNamingConvention());
 
-            services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<BattleOfMonstersWriteDbContext>());
+            services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<BattleOfMonstersContext>());
 
             services.AddScoped<IMonsterRepository, MonsterRepository>();
             services.AddScoped<IBattleRepository, BattleRepository>();

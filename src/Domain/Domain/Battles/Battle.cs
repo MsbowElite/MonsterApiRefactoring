@@ -8,15 +8,23 @@ using System.Threading.Tasks;
 
 namespace Domain.Battles;
 
-public class Battle(
-    Guid id,
-    Guid monsterIdA,
-    Guid monsterIdB,
-    Guid monsterWinnerId) : Entity(id)
+public sealed class Battle : Entity
 {
-    public Guid MonsterA { get; set; } = monsterIdA;
-    public Guid MonsterB { get; set; } = monsterIdB;
-    public Guid MonsterWinnerId { get; set; } = monsterWinnerId;
+    public Battle(Guid id,
+                  Guid monsterA,
+                  Guid monsterB,
+                  Guid monsterWinnerId) : base(id)
+    {
+        MonsterA = monsterA;
+        MonsterB = monsterB;
+        MonsterWinnerId = monsterWinnerId;
+    }
+
+    private Battle() { }
+
+    public Guid MonsterA { get; set; }
+    public Guid MonsterB { get; set; }
+    public Guid MonsterWinnerId { get; set; }
 
     public Monster? MonsterARelation { get; set; }
     public Monster? MonsterBRelation { get; set; }

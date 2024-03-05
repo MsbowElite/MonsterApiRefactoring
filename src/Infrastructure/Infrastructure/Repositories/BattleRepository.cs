@@ -4,7 +4,7 @@ using System.Threading;
 
 namespace Infrastructure.Repositories;
 
-internal sealed class BattleRepository(BattleOfMonstersWriteDbContext context) : IBattleRepository
+internal sealed class BattleRepository(BattleOfMonstersContext context) : IBattleRepository
 {
     public async ValueTask<Battle?> FindAsync(int id, CancellationToken cancellationToken)
     {
