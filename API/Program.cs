@@ -2,8 +2,8 @@
 using API.Extensions;
 using API.Infrastructure;
 using Application;
-using Infrastructure;
 using FluentValidation;
+using Infrastructure;
 using Serilog;
 
 const string CorsPolicy = "CorsPolicy";

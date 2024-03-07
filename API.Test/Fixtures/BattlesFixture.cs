@@ -10,7 +10,7 @@ public static class BattlesFixture
         return new[]
         {
             new Battle(
-            
+
                 Guid.NewGuid(),
                 MonsterIdA,
                 Guid.NewGuid(),

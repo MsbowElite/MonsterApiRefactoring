@@ -1,12 +1,11 @@
 ﻿using Domain.Battles;
 using Infrastructure.Database;
-using System.Threading;
 
 namespace Infrastructure.Repositories;
 
 internal sealed class BattleRepository(BattleOfMonstersContext context) : IBattleRepository
 {
-    public async ValueTask<Battle?> FindAsync(int id, CancellationToken cancellationToken)
+    public async ValueTask<Battle?> FindAsync(Guid id, CancellationToken cancellationToken)
     {
         return await context.Battles.FindAsync(id, cancellationToken);
     }

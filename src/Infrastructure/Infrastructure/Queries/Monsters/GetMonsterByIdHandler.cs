@@ -1,10 +1,10 @@
 ﻿using Application.Abstractions.Messaging;
 using Application.Monsters;
-using SharedKernel;
-using Infrastructure.Database;
 using Application.Monsters.GetById;
-using Microsoft.EntityFrameworkCore;
 using Domain.Monsters;
+using Infrastructure.Database;
+using Microsoft.EntityFrameworkCore;
+using SharedKernel;
 
 namespace Infrastructure.Queries.Monsters;
 

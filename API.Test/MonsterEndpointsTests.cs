@@ -6,13 +6,11 @@ using Application.Monsters.GetById;
 using Application.Monsters.GetMonsters;
 using Domain.Monsters;
 using FluentAssertions;
-using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Moq;
 using SharedKernel;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace API.Test;
 

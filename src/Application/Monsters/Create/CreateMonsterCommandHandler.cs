@@ -6,7 +6,7 @@ using SharedKernel;
 namespace Application.Monsters.Create;
 
 public sealed record CreateMonsterCommand(
-    string Name, 
+    string Name,
     int Attack,
     int Defense,
     int Hp,

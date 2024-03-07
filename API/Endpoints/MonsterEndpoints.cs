@@ -1,19 +1,16 @@
 ﻿using API.Endpoints.Internal;
 using API.Extensions;
 using API.Infrastructure;
-using API.Models;
+using Application.Monsters;
 using Application.Monsters.Create;
 using Application.Monsters.GetById;
 using Application.Monsters.GetMonsters;
 using Application.Monsters.Remove;
 using Application.Monsters.Update;
-using CsvHelper;
-using Domain.Monsters;
 using FluentValidation;
 using FluentValidation.Results;
 using Mapster;
 using MediatR;
-using System.Globalization;
 
 namespace API.Endpoints
 {
@@ -31,27 +28,26 @@ namespace API.Endpoints
 
             monsters.MapPost(Slash, CreateMonsterAsync)
                 .WithName("CreateMonster")
-                .Accepts<Monster>(ContentType)
-                .Produces<Monster>(201)
+                .Accepts<CreateMonsterRequest>(ContentType)
+                .Produces<Guid>(201)
                 .Produces<IEnumerable<ValidationFailure>>(400);
 
             monsters.MapGet(Slash, GetMonstersAsync)
                 .WithName("GetMonsters")
-                .Produces<IEnumerable<Monster>>(200);
+                .Produces<IEnumerable<MonsterResponse>>(200);
 
             monsters.MapGet($"{Slash}{{id}}", GetMonsterByIdAsync)
                 .WithName("GetMonster")
-                .Accepts<Monster>(ContentType)
-                .Produces<Monster>(200)
+                .Produces<MonsterResponse>(200)
                 .Produces<string>(404);
 
             monsters.MapPut($"{Slash}{{id}}", UpdateMonsterAsync)
                 .WithName("UpdateMonster")
-                .Accepts<Monster>(ContentType)
-                .Produces<Monster>(200)
+                .Accepts<UpdateMonsterRequest>(ContentType)
+                .Produces(204)
                 .Produces<IEnumerable<ValidationFailure>>(400)
                 .Produces<string>(404)
-                .Produces<Monster>(422);
+                .Produces(422);
 
             monsters.MapDelete($"{Slash}{{id}}", DeleteMonsterAsync)
                 .WithName("DeleteMonster")
@@ -86,23 +82,23 @@ namespace API.Endpoints
             //    });
             //}
             var command = request.Adapt<CreateMonsterCommand>();
-            var monsterId = await sender.Send(command, cancellationToken);
+            var result = await sender.Send(command, cancellationToken);
 
-            return Results.Created($"/{BaseRoute}/{monsterId}", monsterId);
+            return Results.Created($"/{BaseRoute}/{result.Value}", result.Value);
         }
 
         public static async Task<IResult> GetMonstersAsync(
             ISender sender, CancellationToken cancellationToken)
         {
-            return Results.Ok(await sender.Send(new GetMonsersQuery()));
+            return Results.Ok((await sender.Send(new GetMonsersQuery(), cancellationToken)).Value);
         }
-        public static async Task<IResult> GetMonsterByIdAsync(Guid MonsterId, 
+        public static async Task<IResult> GetMonsterByIdAsync(Guid MonsterId,
             ISender sender, CancellationToken cancellationToken)
         {
-            var monster = (await sender.Send(new GetMonserByIdQuery(MonsterId))).Value;
+            var monster = (await sender.Send(new GetMonserByIdQuery(MonsterId), cancellationToken)).Value;
             return monster is not null ? Results.Ok(monster) : Results.NotFound($"The monster with ID = {MonsterId} not found.");
         }
-        public static async Task<IResult> UpdateMonsterAsync(Guid MonsterId, UpdateMonsterRequest monster, 
+        public static async Task<IResult> UpdateMonsterAsync(Guid MonsterId, UpdateMonsterRequest monster,
             ISender sender, CancellationToken cancellationToken)
         {
             //ValidationResult validationResult = await validator.ValidateAsync(monster);

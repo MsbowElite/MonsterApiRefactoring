@@ -8,10 +8,9 @@ namespace Application.Monsters.Remove;
 
 public sealed record RemoveMonsterCommand(Guid Id) : ICommand;
 
-internal sealed class RemoveMonsterCommandHandler(
-IMonsterRepository monsterRepository,
-IUnitOfWork unitOfWork
-) : ICommandHandler<RemoveMonsterCommand>
+internal sealed class RemoveBattleCommandHandler(
+    IMonsterRepository monsterRepository,
+    IUnitOfWork unitOfWork) : ICommandHandler<RemoveMonsterCommand>
 {
     public async Task<Result> Handle(RemoveMonsterCommand command, CancellationToken cancellationToken)
     {
