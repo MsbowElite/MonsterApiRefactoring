@@ -66,8 +66,8 @@ namespace API.Endpoints
             //        new("Id", "A battle with this Id already exists")
             //    });
             //}
-
-            return Results.Created($"/{BaseRoute}/{result.Value}", result.Value);
+            //Results.Created($"/{BaseRoute}/{result.Value}", result.Value)
+            return result.Match(Results.Created, CustomResults.Problem);
         }
         internal static async Task<IResult> GetAllBattlesAsync(
             ISender sender, CancellationToken cancellationToken)

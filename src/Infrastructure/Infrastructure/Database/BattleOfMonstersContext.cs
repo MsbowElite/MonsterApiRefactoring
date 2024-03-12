@@ -5,7 +5,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Database;
 
-public class BattleOfMonstersContext(DbContextOptions<BattleOfMonstersContext> dbContextOptions) : DbContext(dbContextOptions), IUnitOfWork
+public class BattleOfMonstersContext(DbContextOptions<BattleOfMonstersContext> dbContextOptions) 
+    : DbContext(dbContextOptions), IUnitOfWork
 {
     public DbSet<Battle> Battles { get; set; } = null!;
     public DbSet<Monster> Monsters { get; set; } = null!;

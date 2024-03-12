@@ -4,6 +4,7 @@ using Domain.Battles;
 using Domain.Monsters;
 using Infrastructure.Caching;
 using Infrastructure.Database;
+using Infrastructure.Outbox;
 using Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -23,16 +24,14 @@ namespace Infrastructure
 
             string? connectionString = configuration.GetConnectionString("Database");
 
-            services.AddDbContext<BattleOfMonstersContext>(
-                options => options
-                    .UseNpgsql(connectionString)
-                    .UseSnakeCaseNamingConvention()
-                    .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking));
+            services.AddSingleton<PublishDomainEventsInterceptor>();
+            services.AddSingleton<InsertOutboxMessagesInterceptor>();
 
             services.AddDbContext<BattleOfMonstersContext>(
                 (sp, options) => options
                     .UseNpgsql(connectionString)
-                    .UseSnakeCaseNamingConvention());
+                    .UseSnakeCaseNamingConvention()
+                    .AddInterceptors(sp.GetRequiredService<InsertOutboxMessagesInterceptor>()));
 
             services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<BattleOfMonstersContext>());
 
